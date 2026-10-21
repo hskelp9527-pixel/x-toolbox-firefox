@@ -8,7 +8,6 @@
   const hhmm = date => date.toTimeString().slice(0, 5);
   let S = State.defaults(), activeAccount = null, generation = 0, loadingAccount = null;
   let scanTimer = 0, resetting = false, profileCache = null, readySent = false;
-  let unfollowPending = false, unfollowBusyUntil = 0;
   let status = '等待识别登录账号';
   const pageStyle = document.createElement('style');
   pageStyle.id = 'xtb-progress-highlights';
@@ -37,20 +36,6 @@
       if (row?.following && !row.f) cell.dataset.xtbpNo = '1';
       else if (cell.hasAttribute('data-xtbp-no')) cell.removeAttribute('data-xtbp-no');
     }
-  }
-  // Only open X's own, per-person confirmation flow after an explicit drawer action.
-  // Recheck live cells after closing the iframe: an account/navigation change must cancel it.
-  function unfollowTarget(handle, uid, owner, gen) {
-    if (owner !== activeAccount || owner !== myHandle() || gen !== generation || !ownFollowing() || resetting || S.scanPaused) return null;
-    const saved = Object.hasOwn(S.following, handle) ? S.following[handle] : null;
-    if (!saved || saved.uid !== uid || saved.f || saved.gone) return null;
-    for (const cell of document.querySelectorAll('[data-testid="UserCell"]')) {
-      const row = extractCell(cell);
-      if (row?.handle !== handle || row.uid !== uid || !row.following || row.f) continue;
-      const button = cell.querySelector(`[data-testid="${uid}-unfollow"]`);
-      if (button?.isConnected && !button.disabled && button.getAttribute('aria-disabled') !== 'true' && button.getClientRects().length) return button;
-    }
-    return null;
   }
   function changed() { refreshHighlights(); XTB.changed(); }
   async function mutate(op, owner = activeAccount, gen = generation) {
@@ -154,34 +139,6 @@
       }
       if (action === 'open-following') {
         location.assign(`/${activeAccount}/following`); return { ok: true };
-      }
-      if (action === 'request-unfollow') {
-        if (payload.confirmed !== true) return { ok: false, error: '请先确认要取消关注的这一个人' };
-        if (unfollowPending || Date.now() < unfollowBusyUntil || document.querySelector('[data-testid="confirmationSheetConfirm"]')) return { ok: false, error: '请先处理 X 当前的确认操作，再选择下一人' };
-        const handle = valid(payload.handle), uid = typeof payload.uid === 'string' && /^\d+$/.test(payload.uid) ? payload.uid : '';
-        if (!handle || !uid) return { ok: false, error: '目标账号信息不完整，请重新扫描' };
-        const owner = activeAccount, gen = generation;
-        if (!ownFollowing()) return { ok: false, error: '请先打开自己的正在关注页面，再对当前已加载的人操作' };
-        if (!unfollowTarget(handle, uid, owner, gen)) return { ok: false, error: '这位用户未在当前页面加载，或关注关系已变化；请回到名单核对后再试' };
-        unfollowPending = true;
-        status = `请在 X 中确认是否取消关注 @${handle}`;
-        XTB.close({ restoreFocus: false });
-        setTimeout(() => {
-          try {
-            const button = unfollowTarget(handle, uid, owner, gen);
-            if (!button || document.querySelector('[data-testid="confirmationSheetConfirm"]')) {
-              status = '页面、账号或关注关系已变化，已取消本次操作；请重新核对';
-              changed(); return;
-            }
-            unfollowBusyUntil = Date.now() + 2500;
-            button.click();
-            // No optimistic removal or counter change. Network observation / scanning owns state.
-          } catch {
-            status = '未能打开 X 的确认操作，请在原页面重试';
-            changed();
-          } finally { unfollowPending = false; }
-        }, 60);
-        return { ok: true, status };
       }
       if (action === 'reset-scan') {
         if (resetting) return { ok: false, error: '正在重新扫描' };

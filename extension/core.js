@@ -3,8 +3,8 @@
   const api=globalThis.browser??globalThis.chrome,engines={},host=document.createElement('div');
   host.id='x-toolbox-firefox';host.style.cssText='all:initial;position:fixed;inset:0;z-index:2147483500;pointer-events:none';
   const shadow=host.attachShadow({mode:'closed'});
-  const style=document.createElement('style');style.textContent=`*{box-sizing:border-box}[hidden]{display:none!important}.launch{position:absolute;height:44px;padding:0 12px;background:#0f1419;color:white;border:1px solid #ffffff88;border-radius:24px;box-shadow:0 3px 12px #0003;font:12px/1 system-ui,'Microsoft YaHei',sans-serif;white-space:nowrap;touch-action:none;user-select:none;cursor:grab;pointer-events:auto}.launch:focus-visible{outline:3px solid #1d9bf0;outline-offset:2px}.resize-handle{position:absolute;height:20px;pointer-events:auto;touch-action:none;cursor:ns-resize;z-index:2;background:transparent;user-select:none}.shade{position:absolute;inset:0;pointer-events:auto;background:#0f141908}.frame{position:absolute;z-index:1;pointer-events:auto;border:1px solid #dce4e8;border-radius:19px;background:white;box-shadow:0 9px 40px #0f14192c;overflow:hidden;color-scheme:light}`;
-  const launcher=document.createElement('button');launcher.className='launch';launcher.textContent='◷ 随手箱';launcher.setAttribute('aria-label','打开 X 三合一工具，拖动可换位置');launcher.setAttribute('aria-expanded','false');
+  const style=document.createElement('style');style.textContent=`*{box-sizing:border-box}[hidden]{display:none!important}.launch{position:absolute;height:44px;padding:0 12px;background:#0f1419;color:white;border:1px solid #ffffff88;border-radius:24px;box-shadow:0 3px 12px #0003;font:12px/1 system-ui,'Microsoft YaHei',sans-serif;white-space:nowrap;touch-action:none;user-select:none;cursor:grab;pointer-events:auto}.launch.circle{width:44px;padding:0;border-radius:50%;font-size:17px;font-weight:700}.launch:focus-visible{outline:3px solid #1d9bf0;outline-offset:2px}.resize-handle{position:absolute;height:20px;pointer-events:auto;touch-action:none;cursor:ns-resize;z-index:2;background:transparent;user-select:none}.shade{position:absolute;inset:0;pointer-events:auto;background:#0f141908}.frame{position:absolute;z-index:1;pointer-events:auto;border:1px solid #dce4e8;border-radius:19px;background:white;box-shadow:0 9px 40px #0f14192c;overflow:hidden;color-scheme:light}`;
+  const launcher=document.createElement('button');launcher.className='launch';launcher.textContent='In';launcher.setAttribute('aria-label','打开 X 三合一工具，拖动可换位置');launcher.setAttribute('aria-expanded','false');
   const shade=document.createElement('div');shade.className='shade';shade.hidden=true;const resizeHandle=document.createElement('div');resizeHandle.className='resize-handle';resizeHandle.hidden=true;resizeHandle.setAttribute('aria-hidden','true');
   shadow.append(style,shade,launcher,resizeHandle);document.documentElement.append(host);
   let frame=null,opened=false,opening=false,openSequence=0,large=false,customHeightRatio=null,position=null,drag=null,suppressUntil=0,token=crypto.randomUUID(),lastTab='schedule',lastFocus=null,activeContext={},owner=globalThis.XSBIdentity?.current()||'';
@@ -28,15 +28,16 @@
       text=ready?`未互关 ${count} 人`:'未互关 …';title=ready?`今日已扫描的未回关人数：${count}；继续浏览名单可补充`:'正在读取当前账号的关注扫描';
     }else{
       const last=accountSnapshot('schedule')?.entries?.filter(e=>e.present!==false&&e.at>=Date.now()).sort((a,b)=>b.at-a.at)[0];
-      text=last?'◷ '+new Date(last.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}):'◷ 随手箱';title=last?'最后一条定时稿：'+new Date(last.at).toLocaleString():'暂无待发布的定时稿';
+      text=last?'◷ '+new Date(last.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}):'In';title=last?'最后一条定时稿：'+new Date(last.at).toLocaleString():'暂无待发布的定时稿';
     }
-    launcher.title=title;launcher.setAttribute('aria-label',title+'，点击展开，拖动可换位置');if(launcher.textContent!==text){launcher.textContent=text;place()}
+    launcher.classList.toggle('circle',text==='In');launcher.title='In · I need · '+title;launcher.setAttribute('aria-label',title+'，点击展开，拖动可换位置');if(launcher.textContent!==text){launcher.textContent=text;place()}
   }
   function syncOwner(preserveComposer=false){const next=account();if(next===owner)return false;owner=next;close({restoreFocus:false,preserveComposer});return true}
   function changed(){syncOwner();updateLauncher();if(opened)api.runtime.sendMessage({channel:'xtb-core',type:'changed'}).catch(()=>{})}
   async function registerContext(contextToken,contextAccount){const result=await api.runtime.sendMessage({channel:'xtb-core',type:'register-context',token:contextToken,account:contextAccount});if(!result?.ok)throw Error(result?.error||'扩展后台不可用')}
   function retire(old){if(!old)return;old.hidden=true;old.style.pointerEvents='none';setTimeout(()=>old.remove(),60)}
   async function open(tab=(isOwnFollowing()?'progress':lastTab),context={}){
+    
     const preparedToken=context.composerToken,keepPrepared=!!preparedToken&&engines.mentions?.snapshot()?.composerToken===preparedToken;
     syncOwner(keepPrepared);
     const sequence=++openSequence,openingOwner=account(),contextToken=crypto.randomUUID();
@@ -51,7 +52,7 @@
       await registerContext(contextToken,openingOwner);
       if(!current()){if(sequence===openSequence)syncOwner();return {ok:false,cancelled:true}}
       lastTab=tab;activeContext=context;
-      frame=document.createElement('iframe');frame.className='frame';frame.title='X 随手箱 · 三合一';frame.src=api.runtime.getURL(`panel.html?token=${contextToken}&tab=${encodeURIComponent(tab)}`);frame.setAttribute('referrerpolicy','no-referrer');
+      frame=document.createElement('iframe');frame.className='frame';frame.title='In · I need';frame.src=api.runtime.getURL(`panel.html?token=${contextToken}&tab=${encodeURIComponent(tab)}`);frame.setAttribute('referrerpolicy','no-referrer');
       shadow.append(frame);opening=false;opened=true;document.dispatchEvent(new Event('xtb-panel-open'));place();
       if(tab==='schedule')engines.schedule?.act('refresh',{mode:'quiet'}).catch(()=>{});
       return {ok:true};
