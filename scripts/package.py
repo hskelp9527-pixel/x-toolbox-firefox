@@ -18,6 +18,8 @@ def package(target):
         data = path.read_bytes()
         if name == 'manifest.json' and target == 'chromium':
             data = (SOURCE / 'manifest.chromium.json').read_bytes()
+        if path.suffix in {'.js', '.json', '.css', '.html', '.md'} or path.name == 'LICENSE':
+            data = data.replace(b'\r\n', b'\n')
         files[name] = data
     build = ROOT / 'build' / target
     for name, data in files.items():
