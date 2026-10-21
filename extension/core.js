@@ -18,7 +18,7 @@
     const status=me?'正在读取当前账号的数据':'等待识别登录账号';
     return name==='schedule'?{account:me,entries:[],scan:null,status,error:''}:{account:me,goals:{post:3,reply:20,quote:5},day:{post:0,reply:0,quote:0,unfollow:0,full:false,log:[]},following:{},scanPaused:false,scanEpoch:0,followLimitUntil:0,followCooldownMin:30,status,highlight:true};
   }
-  function updateLauncher(){const next=accountSnapshot('schedule')?.entries?.filter(e=>e.present!==false&&e.at>=Date.now()).sort((a,b)=>a.at-b.at)[0],text=next?'◷ '+new Date(next.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}):'◷ 随手箱';if(launcher.textContent!==text){launcher.textContent=text;place()}}
+  function updateLauncher(){const last=accountSnapshot('schedule')?.entries?.filter(e=>e.present!==false&&e.at>=Date.now()).sort((a,b)=>b.at-a.at)[0],text=last?'◷ '+new Date(last.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}):'◷ 随手箱';launcher.title=last?'最后一条定时稿：'+new Date(last.at).toLocaleString():'暂无待发布的定时稿';launcher.setAttribute('aria-label',launcher.title+'，点击展开，拖动可换位置');if(launcher.textContent!==text){launcher.textContent=text;place()}}
   function syncOwner(preserveComposer=false){const next=account();if(next===owner)return false;owner=next;close({restoreFocus:false,preserveComposer});return true}
   function changed(){syncOwner();updateLauncher();if(opened)api.runtime.sendMessage({channel:'xtb-core',type:'changed'}).catch(()=>{})}
   async function registerContext(contextToken,contextAccount){const result=await api.runtime.sendMessage({channel:'xtb-core',type:'register-context',token:contextToken,account:contextAccount});if(!result?.ok)throw Error(result?.error||'扩展后台不可用')}
