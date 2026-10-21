@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "X 随手箱 · 三合一",
+  "version": "0.1.0",
+  "description": "一个可拖动的小入口：定时发稿自动记录、每日输出进度与未回关高亮、头像昵称与 @ 收藏插入。",
+  "permissions": [
+    "storage",
+    "clipboardWrite",
+    "activeTab"
+  ],
+  "icons": {
+    "48": "icons/48.png",
+    "96": "icons/96.png"
+  },
+  "action": {
+    "default_title": "打开 X 随手箱",
+    "default_icon": {
+      "48": "icons/48.png"
+    }
+  },
+  "background": {
+    "service_worker": "worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "vendor/schedule/identity.js",
+        "vendor/schedule/hook.js",
+        "vendor/progress/hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "vendor/schedule/identity.js",
+        "vendor/schedule/model.js",
+        "vendor/progress/model.js",
+        "vendor/progress/state.js",
+        "vendor/mentions/profile.js",
+        "core.js",
+        "modules/schedule-content.js",
+        "modules/progress-content.js",
+        "modules/mentions-content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "panel.html",
+        "panel.js",
+        "panel.css"
+      ],
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; img-src 'self' https://pbs.twimg.com https://abs.twimg.com;"
+  }
+}

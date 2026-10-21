@@ -1,0 +1,32 @@
+name: Verify and package
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run package
+      - run: npx playwright-core install --with-deps chromium
+      - run: npm run test:browser
+      - run: npx --yes web-ext@10.8.0 lint --source-dir build/firefox --warnings-as-errors
+      - uses: actions/upload-artifact@v4
+        with:
+          name: x-toolbox-acceptance-packages
+          path: dist/*

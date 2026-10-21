@@ -1,0 +1,6 @@
+node_modules/
+artifacts/
+build/
+dist/
+*.log
+preview-*.png

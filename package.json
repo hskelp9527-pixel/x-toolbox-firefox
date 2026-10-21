@@ -1,0 +1,16 @@
+{
+  "name": "x-toolbox-firefox",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Three X tools in one compact Firefox bottom drawer",
+  "license": "MIT",
+  "scripts": {
+    "check": "node scripts/check.cjs",
+    "test": "node --test tests/background.test.cjs tests/identity.test.cjs",
+    "test:browser": "node tests/browser.test.cjs",
+    "package": "python scripts/package.py"
+  },
+  "devDependencies": {
+    "playwright-core": "1.61.1"
+  }
+}

@@ -1,0 +1,1 @@
+importScripts("vendor/schedule/model.js","vendor/progress/model.js","vendor/progress/state.js","vendor/mentions/model.js","modules/schedule-background.js","modules/progress-background.js","modules/mentions-background.js","background.js");

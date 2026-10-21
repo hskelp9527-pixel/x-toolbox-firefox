@@ -1,0 +1,12 @@
+{
+  "version": "0.1.0",
+  "features": [
+    {"id":"combined-drawer","status":"done"},
+    {"id":"auto-schedule-record","status":"done"},
+    {"id":"daily-progress-reset-and-highlight","status":"done"},
+    {"id":"contacts-avatar-name-insert","status":"done"},
+    {"id":"device-preview","status":"done"},
+    {"id":"mozilla-signing","status":"pending-user-account"},
+    {"id":"android-device-acceptance","status":"pending-user-test"}
+  ]
+}
